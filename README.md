@@ -17,7 +17,7 @@ Is a comprehensive OSINT tool for looking up linked phone number information, us
 ## ✨ Features
 
 - 📱 **Phone Number Validation** - Validates and formats phone numbers using phonenumbers library
-- 🔍 **Multiple Search Engines** - Searches Google (via SerpAPI), DuckDuckGo, and Bing
+- 🔍 **Multiple Search Engines** - Searches Google (via SerpAPI) and DuckDuckGo
 - 💻 **Code Repository Search** - Finds phone numbers in GitHub code
 - 📝 **Social Media Search** - Searches Reddit for mentions
 - 📊 **Carrier Information** - Gets operator and location data via Numverify API

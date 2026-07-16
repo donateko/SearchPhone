@@ -96,7 +96,7 @@ class PhoneOSINT:
             return None
             
         try:
-            url = "http://apilayer.net/api/validate"
+            url = "https://apilayer.net/api/validate"
             params = {
                 'access_key': self.api_keys['numverify'],
                 'number': phone_number,
