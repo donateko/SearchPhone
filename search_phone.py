@@ -430,127 +430,130 @@ class PhoneOSINT:
         if not PDF_AVAILABLE:
             print(f"{Fore.YELLOW}⚠️ PDF no generado (fpdf no instalado)")
             return
-            
+
         try:
+            from fpdf import FPDF, XPos, YPos
+
             filename = os.path.join(self.report_dir, self.get_filename('pdf'))
-            
+
             pdf = FPDF()
             pdf.add_page()
-            
-            pdf.set_font("Arial", "B", 16)
-            pdf.cell(190, 10, "SearchPhone OSINT - Reporte", ln=True, align='C')
-            pdf.set_font("Arial", "", 10)
-            pdf.cell(190, 6, f"Telefono: {self.phone_number}", ln=True)
-            pdf.cell(190, 6, f"Region: {self.region.upper()}", ln=True)
-            pdf.cell(190, 6, f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
+
+            # Configurar fuente (usar helvetica en lugar de arial, que es la predeterminada)
+            pdf.set_font("Helvetica", "B", 16)
+            pdf.cell(190, 10, "SearchPhone OSINT - Reporte", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+            pdf.set_font("Helvetica", "", 10)
+            pdf.cell(190, 6, f"Telefono: {self.phone_number}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(190, 6, f"Region: {self.region.upper()}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(190, 6, f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.ln(5)
-            
+
             pdf.set_draw_color(0, 0, 0)
             pdf.line(10, 40, 200, 40)
             pdf.ln(5)
-            
+
             # Información básica
-            pdf.set_font("Arial", "B", 12)
-            pdf.cell(190, 8, "INFORMACION BASICA", ln=True)
-            pdf.set_font("Arial", "", 10)
-            
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.cell(190, 8, "INFORMACION BASICA", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font("Helvetica", "", 10)
+
             phone_info = self.results.get('phone_info', {})
             if phone_info:
-                pdf.cell(190, 6, f"  Internacional: {self.clean_text(phone_info.get('international', 'N/A'))}", ln=True)
-                pdf.cell(190, 6, f"  Pais: {self.clean_text(phone_info.get('country', 'N/A'))}", ln=True)
-                pdf.cell(190, 6, f"  Operador: {self.clean_text(phone_info.get('carrier', 'N/A'))}", ln=True)
-                pdf.cell(190, 6, f"  Zona Horaria: {self.clean_text(', '.join(phone_info.get('timezone', ['N/A'])))}", ln=True)
-            
+                pdf.cell(190, 6, f"  Internacional: {self.clean_text(phone_info.get('international', 'N/A'))}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.cell(190, 6, f"  Pais: {self.clean_text(phone_info.get('country', 'N/A'))}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.cell(190, 6, f"  Operador: {self.clean_text(phone_info.get('carrier', 'N/A'))}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.cell(190, 6, f"  Zona Horaria: {self.clean_text(', '.join(phone_info.get('timezone', ['N/A'])))}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
             pdf.ln(5)
-            
+
             # Numverify
             if self.results.get('numverify'):
-                pdf.set_font("Arial", "B", 12)
-                pdf.cell(190, 8, "NUMVERIFY", ln=True)
-                pdf.set_font("Arial", "", 10)
+                pdf.set_font("Helvetica", "B", 12)
+                pdf.cell(190, 8, "NUMVERIFY", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.set_font("Helvetica", "", 10)
                 nv = self.results['numverify']
                 if nv.get('carrier'):
-                    pdf.cell(190, 6, f"  Operador: {self.clean_text(nv['carrier'])}", ln=True)
+                    pdf.cell(190, 6, f"  Operador: {self.clean_text(nv['carrier'])}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 if nv.get('line_type'):
-                    pdf.cell(190, 6, f"  Tipo: {self.clean_text(nv['line_type'])}", ln=True)
+                    pdf.cell(190, 6, f"  Tipo: {self.clean_text(nv['line_type'])}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.ln(5)
-            
+
             # Google
             if self.results.get('google'):
-                pdf.set_font("Arial", "B", 12)
-                pdf.cell(190, 8, "GOOGLE", ln=True)
-                pdf.set_font("Arial", "", 10)
+                pdf.set_font("Helvetica", "B", 12)
+                pdf.cell(190, 8, "GOOGLE", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.set_font("Helvetica", "", 10)
                 for i, item in enumerate(self.results['google'][:5], 1):
                     title = self.clean_text(item.get('title', 'Sin titulo'))[:100]
                     link = self.clean_text(item.get('link', ''))
                     snippet = self.clean_text(item.get('snippet', ''))[:200]
-                    
-                    pdf.cell(190, 6, f"  {i}. {title}", ln=True)
+
+                    pdf.cell(190, 6, f"  {i}. {title}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                     if link:
-                        pdf.set_font("Arial", "I", 8)
-                        pdf.cell(190, 5, f"     URL: {link[:80]}", ln=True)
-                        pdf.set_font("Arial", "", 10)
+                        pdf.set_font("Helvetica", "I", 8)
+                        pdf.cell(190, 5, f"     URL: {link[:80]}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                        pdf.set_font("Helvetica", "", 10)
                     if snippet:
-                        pdf.set_font("Arial", "I", 9)
+                        pdf.set_font("Helvetica", "I", 9)
                         pdf.multi_cell(190, 5, f"     {snippet}")
-                        pdf.set_font("Arial", "", 10)
+                        pdf.set_font("Helvetica", "", 10)
                     pdf.ln(2)
                 pdf.ln(3)
-            
-            # Reddit
+
+            # Reddit (opcional, ya que a veces da 0 resultados)
             if self.results.get('reddit') and len(self.results['reddit']) > 0:
-                pdf.set_font("Arial", "B", 12)
-                pdf.cell(190, 8, "REDDIT", ln=True)
-                pdf.set_font("Arial", "", 10)
+                pdf.set_font("Helvetica", "B", 12)
+                pdf.cell(190, 8, "REDDIT", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.set_font("Helvetica", "", 10)
                 for i, post in enumerate(self.results['reddit'][:3], 1):
                     title = self.clean_text(post.get('title', 'Sin titulo'))[:80]
                     url = self.clean_text(post.get('url', ''))
-                    
-                    pdf.cell(190, 6, f"  {i}. {title}", ln=True)
+
+                    pdf.cell(190, 6, f"  {i}. {title}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                     if url:
-                        pdf.set_font("Arial", "I", 8)
-                        pdf.cell(190, 5, f"     URL: {url}", ln=True)
-                        pdf.set_font("Arial", "", 10)
+                        pdf.set_font("Helvetica", "I", 8)
+                        pdf.cell(190, 5, f"     URL: {url}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                        pdf.set_font("Helvetica", "", 10)
                 pdf.ln(3)
-            
+
             # GitHub
             if self.results.get('github') and len(self.results['github']) > 0:
-                pdf.set_font("Arial", "B", 12)
-                pdf.cell(190, 8, "GITHUB", ln=True)
-                pdf.set_font("Arial", "", 10)
+                pdf.set_font("Helvetica", "B", 12)
+                pdf.cell(190, 8, "GITHUB", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.set_font("Helvetica", "", 10)
                 for i, item in enumerate(self.results['github'][:3], 1):
                     repo = self.clean_text(item.get('repository', 'Desconocido'))
                     path = self.clean_text(item.get('path', ''))
                     url = self.clean_text(item.get('url', ''))
-                    
+
                     display = f"{repo}"
                     if path:
                         display += f" -> {path}"
-                    pdf.cell(190, 6, f"  {i}. {display[:100]}", ln=True)
+                    pdf.cell(190, 6, f"  {i}. {display[:100]}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                     if url:
-                        pdf.set_font("Arial", "I", 8)
-                        pdf.cell(190, 5, f"     URL: {url}", ln=True)
-                        pdf.set_font("Arial", "", 10)
+                        pdf.set_font("Helvetica", "I", 8)
+                        pdf.cell(190, 5, f"     URL: {url}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                        pdf.set_font("Helvetica", "", 10)
                 pdf.ln(3)
-            
+
             # Resumen
-            pdf.set_font("Arial", "B", 12)
-            pdf.cell(190, 8, "RESUMEN", ln=True)
-            pdf.set_font("Arial", "", 10)
-            
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.cell(190, 8, "RESUMEN", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font("Helvetica", "", 10)
+
             total_found = 0
             services = ['google', 'reddit', 'github', 'duckduckgo']
             for source in services:
                 count = len(self.results.get(source, []))
                 if count > 0:
-                    pdf.cell(190, 6, f"  {source.capitalize()}: {count} resultados", ln=True)
+                    pdf.cell(190, 6, f"  {source.capitalize()}: {count} resultados", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                     total_found += count
-            
-            pdf.cell(190, 6, f"\n  TOTAL DE RESULTADOS: {total_found}", ln=True)
-            
+
+            pdf.cell(190, 6, f"\n  TOTAL DE RESULTADOS: {total_found}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
             pdf.output(filename)
             print(f"{Fore.GREEN}✅ PDF exportado: {filename}")
-            
+
         except Exception as e:
             print(f"{Fore.RED}❌ Error exportando PDF: {e}")
 
