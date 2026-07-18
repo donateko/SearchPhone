@@ -5,6 +5,7 @@ import os
 import re
 import json
 import time
+import argparse
 import requests
 from colorama import Fore, init, Style
 from dotenv import load_dotenv
@@ -49,14 +50,24 @@ jgs  |[:::]|                '-----'
 """
 
 class PhoneOSINT:
-    def __init__(self):
+    def __init__(self, proxy=None):
         # SOLO LAS QUE FUNCIONAN
         self.api_keys = {
             'numverify': os.getenv('NUMVERIFY_KEY', ''),
             'serpapi': os.getenv('SERPAPI_KEY', ''),
             'github': os.getenv('GITHUB_TOKEN', '')
         }
-        
+
+        # Configuración de proxy (OPSEC): enruta TODO el tráfico HTTP/S a través
+        # de un proxy HTTP o SOCKS5 (p. ej. Tor) para no exponer la IP real del
+        # investigador al objetivo. Prioridad: argumento --proxy > PROXY_URL (.env).
+        # Para SOCKS5 usa el esquema socks5h:// (la 'h' resuelve el DNS a través
+        # del proxy y evita filtrar las consultas DNS al resolver local).
+        self.proxy = proxy or os.getenv('PROXY_URL', '') or None
+        self.session = requests.Session()
+        if self.proxy:
+            self.session.proxies = {'http': self.proxy, 'https': self.proxy}
+
         self.results = {
             'phone_info': {},
             'numverify': None,
@@ -70,7 +81,26 @@ class PhoneOSINT:
         # Crear directorio de reportes si no existe
         if not os.path.exists(self.report_dir):
             os.makedirs(self.report_dir)
-        
+
+    def verify_proxy(self):
+        """Verifica el proxy y muestra la IP de salida antes de consultar (fail-closed).
+
+        Si hay un proxy configurado pero no responde, aborta en lugar de caer
+        silenciosamente a una conexión directa, que expondría la IP real del
+        investigador justo cuando cree estar protegido.
+        """
+        if not self.proxy:
+            return True
+        try:
+            resp = self.session.get('https://api.ipify.org?format=json', timeout=20)
+            exit_ip = resp.json().get('ip', 'desconocida')
+            print(f"{Fore.GREEN}🛡️  Proxy activo. IP de salida: {exit_ip}")
+            return True
+        except Exception as e:
+            print(f"{Fore.RED}❌ Proxy configurado pero no disponible: {e}")
+            print(f"{Fore.RED}   Abortando para no exponer tu IP real (fail-closed).")
+            return False
+
     def validate_phone(self, number, region='pe'):
         """Validate and format phone number"""
         try:
@@ -102,7 +132,7 @@ class PhoneOSINT:
                 'number': phone_number,
                 'country_code': region.upper()
             }
-            response = requests.get(url, params=params, timeout=10)
+            response = self.session.get(url, params=params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 if data.get('valid'):
@@ -130,7 +160,7 @@ class PhoneOSINT:
                 'gl': 'pe',
                 'hl': 'es'
             }
-            response = requests.get(url, params=params, timeout=15)
+            response = self.session.get(url, params=params, timeout=15)
             
             if response.status_code == 200:
                 data = response.json()
@@ -151,7 +181,7 @@ class PhoneOSINT:
         try:
             url = "https://api.duckduckgo.com/"
             params = {'q': f'"{phone_number}"', 'format': 'json', 'no_html': 1}
-            response = requests.get(url, params=params, timeout=10)
+            response = self.session.get(url, params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -173,8 +203,8 @@ class PhoneOSINT:
             url = "https://www.reddit.com/r/all/search.json"
             params = {'q': f'"{phone_number}"', 'limit': 20}
             headers = {'User-Agent': 'Mozilla/5.0 (compatible; PhoneOSINT/1.0)'}
-            
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+
+            response = self.session.get(url, headers=headers, params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -205,8 +235,8 @@ class PhoneOSINT:
                 'Accept': 'application/vnd.github.v3+json'
             }
             params = {'q': f'"{phone_number}"'}
-            
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+
+            response = self.session.get(url, headers=headers, params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -558,20 +588,37 @@ class PhoneOSINT:
             print(f"{Fore.RED}❌ Error exportando PDF: {e}")
 
 def main():
+    # Argumentos de línea de comandos
+    parser = argparse.ArgumentParser(
+        description="SearchPhone - Suite OSINT para números de teléfono"
+    )
+    parser.add_argument(
+        '--proxy',
+        default=None,
+        help="Proxy HTTP o SOCKS5 para TODAS las peticiones (OPSEC). "
+             "Ej: socks5h://127.0.0.1:9050 para Tor. "
+             "También configurable con PROXY_URL en el archivo .env."
+    )
+    args = parser.parse_args()
+
     # Imprimir ASCII art en verde
     print(Fore.GREEN + ascii_art)
-    
+
     # Línea de donations con estilo llamativo
     print(f"{Fore.YELLOW}{Style.BRIGHT}☕ Donations: https://buymeacoffee.com/hackunderway{Style.RESET_ALL}")
     print()  # Línea en blanco para separar
-    
+
     # Get input
     phone_number = input(Fore.GREEN + "📱 Introduce el número de teléfono: ")
     region = input(Fore.GREEN + "🌍 Introduce la región (ej. 'pe' para Perú): ")
-    
-    # Create analyzer instance
-    analyzer = PhoneOSINT()
-    
+
+    # Create analyzer instance (con proxy opcional para OPSEC)
+    analyzer = PhoneOSINT(proxy=args.proxy)
+
+    # Verificar el proxy antes de tocar el objetivo (fail-closed: no filtra la IP real)
+    if not analyzer.verify_proxy():
+        return
+
     # Analyze
     analyzer.analyze_phone(phone_number, region)
 

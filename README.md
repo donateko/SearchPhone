@@ -24,6 +24,7 @@ Is a comprehensive OSINT tool for looking up linked phone number information, us
 - 📄 **Automatic Reports** - Generates JSON and PDF reports automatically
 - 🚀 **Parallel Processing** - Searches multiple sources simultaneously for speed
 - 🎨 **Colorful Output** - Easy to read terminal output with colors
+- 🛡️ **Proxy / Tor Support (OPSEC)** - Route all requests through an HTTP or SOCKS5 proxy to protect the investigator's IP
 
 ## 🔑 API Keys Required
 
@@ -99,6 +100,27 @@ cd SearchPhone
 ```
 python3 search_phone.py
 ```
+
+## 🛡️ Proxy / Tor Support (OPSEC)
+
+By default, all queries (DuckDuckGo, Reddit, GitHub, etc.) are sent directly from your host's IP address. When investigating a target, this can expose the investigator's real IP. You can route **all** requests through an HTTP or SOCKS5 proxy (such as Tor) instead.
+
+**Option 1 — CLI flag:**
+```
+python3 search_phone.py --proxy socks5h://127.0.0.1:9050
+```
+
+**Option 2 — .env file** (the CLI flag overrides it):
+```
+PROXY_URL=socks5h://127.0.0.1:9050
+```
+
+Notes:
+- For **Tor**, run the Tor service (default SOCKS port `9050`) and use the `socks5h://` scheme. The `h` makes DNS resolve **through** the proxy, preventing DNS leaks to your local resolver.
+- HTTP proxies with auth are supported too: `http://user:pass@host:port`.
+- **Fail-closed by design:** if a proxy is configured but unreachable, the tool prints your exit IP check and aborts instead of silently falling back to a direct connection that would leak your real IP.
+- SOCKS5 support requires the `requests[socks]` dependency, which is already pinned in `requirements.txt`.
+
 # REQUIREMENTS
 ```
 pip install -r requirements.txt
